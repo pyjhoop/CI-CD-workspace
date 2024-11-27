@@ -1,0 +1,32 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:2.471-jdk21
+    ports:
+      - "8081:8080" # 앞의 포트는 외부에서 접근하는 포트 뒤의 포트는 컨테이너 내의  젠킨스 애플리케이션 포트 포트포워딩 작업
+      - "50000:50000" # 분산 빌드 환경에서 작업을 실행할때 사용되는 포트이다. 젠킨스 마스터가 에이전트에 50000포트를 통해 작업 지시를 내리고 받는다.
+    volumes:
+      - ${HOST_JENKINS_HOME}:/var/jenkins_home
+    links:
+      - worker-1
+
+  ## 링크를 통해서 노드간의 통신이 가능하다.
+  # 컨테이너의 /var/jenkins_home이 내 pc HOST_JENKINS_HOME에 저장된다.
+  # 컨테이너를 삭제해도 볼륨을 통해 피씨에 연동해서 데이터는 피씨에 남아있어서 새롭게 컨테이너를 띄울때 볼륨만 매핑하면 과거의 데이터를 옮길수 있다.
+
+  worker-1:
+    image: jenkins/ssh-agent:latest-jdk21
+    volumes:
+      - ${HOST_JENKINS_WORKER_1}:/home/jenkins
+    environment:
+      - JENKINS_SLAVE_SSH_PUBKEY=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCpiQuRxRZbF/VpufqnPgqcS5zXWZOOXtSKZ1+ErZ7rUBntzI/WxB3NIP0DLFxS4bndAd6p9+TkEJ6mQ7hLFVnAEOeLCS1kgOeA8rdCvwpoCioRBWy47gyz6BNDqDO895dPr12D6Rbs9N+W16dDbLBp4+hPYAsetOakaWxHug6R5zs1xdIs6yIZdC5X1euTFia8Ci1sLr862GV5O2PE5XL1rWZN+vSybvcgAb57V4dDPyhLZXRSJDUVYcJxoG7YAXrEwwBjQ8xEOjPmM8nGgnbNws0I5DK6DJR96c9jhLXCVcaibJczBPKrUBLdY8d1uHUJKtYdspitfJ0uJyu49kZBBLtXWAtq2/LLxhV3Rt+7dDDPzrD5wsrZ4iaQ+B20Uyx/IzU0rsEVOEm7CFlPJluCp2jTkh6kRJNBS2zdy6De5lzVJAziYgfEoPiFfY6qX5Se9OyfEqIJBM9MGxHRagOVnRjT2KMIFy9WoT6HHTEF54xtD0MrIPnmNZy1yFkEN8s=
+
+## docker-compose up -d 로 컴포즈 실행
+## up은 파일에 정의된 서비스를 실행하거나 생성한다. 필요한 경우 이미지를 빌드하고, 네트워크를 생성하고, 컨테이너를 실행한다.
+## -d는 터미널을 점유하지 않고, 명령어가 실행된 이후 터미널을 반환한다.
+## 보통 젠킨스에서 컨트롤러 또는 마스터 는 워커의 역할도 한다. 마스터 슬레이브 , 마스터 워커구조는 컨트롤러에서는 워컥가 하는 일을 하지 않고 워커에 명령을 하달함.
+## 워커는 그 명령을 수행하고, 컨트롤러에는 그 명령을 전답한다.
+## 지금은 싱글 노드로 실행 할 수있는 버전을 설치했기에 마스터에서도 하나의 잡을 만들어서 실행시킬 수 있다.
+
+
+##  Worker , Slave, Agent 설치
+## 실무에서는 마스터에서는 명령을 내리는 역할을 하고, 워커는 명령을 받아서 작업을 실ㅎ애하고 결과를 마스터에 전달 또는 보고 하는 역할을 한다.
