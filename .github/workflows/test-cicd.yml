@@ -1,12 +1,9 @@
 name: test-cicd.yml
 
 on: 
-  workflow_dispatch:
-    inputs:
-      tags: 
-        description: 'Set Tags Name'
-        required: true
-        default : master
+  push:
+    branches:
+      - master
 
 jobs:
   build: 
