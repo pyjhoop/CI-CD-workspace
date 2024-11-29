@@ -1,0 +1,23 @@
+name: test-cicd.yml
+
+on: 
+  workflow_dispatch:
+    inputs:
+      tags: 
+        description: 'Set Tags Name'
+        required: true
+        default : master
+
+jobs:
+  build: 
+    runs-on : ubuntu-latest
+    outputs:
+      release : ${{ steps.set-version.outputs.VERSION_NAME}}
+    steps:
+      - id: set-version
+        run: |
+          echo "VERSION_NAME=$(echo "${{github.event.inputs.tags}}" | sed "s/\./\-/g")" >> $GITHUB_OUTPUT
+
+      - name: Check Version Name
+        run: |
+          echo "Check Version -> ${{steps.set-version.outputs.VERSION_NAME}}"
