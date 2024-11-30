@@ -58,10 +58,10 @@ jobs:
           key: ${{ secrets.AWS_SECRET_KEY }}
           port: 22
           script: |
-            mkdir -p /home/${{ secrets.EC2_USER_NAME }}/
-            mv build/libs/cicd-study-1.0.0.jar /home/${{ secrets.EC2_USER_NAME }}/cicd-study-1.0.0.jar
+            mkdir -p /home/${{ secrets.AWS_USER_NAME }}/
+            mv build/libs/cicd-study-1.0.0.jar /home/${{ secrets.AWS_USER_NAME }}/cicd-study-1.0.0.jar
             pkill -f cicd-study || true
-            nohup java -jar /home/${{ secrets.EC2_USER_NAME }}/cicd-study-1.0.0.jar > app.log 2>&1 &
+            nohup java -jar /home/${{ secrets.AWS_USER_NAME }}/cicd-study-1.0.0.jar > app.log 2>&1 &
 
 
 
