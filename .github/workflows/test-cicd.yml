@@ -2,19 +2,20 @@ name: Github-CI/CD # 워크 플로우 이름을 지정해준다.
 
 # 어떤 이벤트에 동작시킬지 지정해준다.
 on:
-  push: # 많은 트기거가 있고 그건 https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows 확인
+  push: # 많은 트기거가 있고 그건 https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows 확인	
     branches:
       - master
 
-# 이벤트 설정이 완료되었으니 job을 생성한다.
+# 이벤트 설정이 완료되었으니 job을 생성한다. 
 # 기본적으로 모든 잡은 병렬적으로 처리된다.
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Check out source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # uses, run 두 옵션이 있고 uses는 함수 또는 깃허브 액션, run은 스크립트
+
       - name: Grant permission for gradlew
         run: chmod +x gradlew
 
@@ -23,3 +24,16 @@ jobs:
         with: # 액션 또는 함수에 설정값을 전달할 때 사용된다.
           java-version: '21'
           distribution: 'temurin'
+
+      - name: Build with gradlew
+        run: ./gradlew clean test bootJar
+
+      - name: Rename Jar file
+        run: |
+         mv build/libs/cicd-0.0.1-SNAPSHOT.jar build/libs/cicd-study-1.0.0.jar
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cicd-study-application # 압축파일 명
+          path: build/libs/cicd-study-1.0.0.jar
