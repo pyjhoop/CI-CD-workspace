@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Check out source code
-        uses: actions/checkout@4
+        uses: actions/checkout@v4
       - name: Grant permission for gradlew
         run: chmod +x gradlew
 
@@ -22,4 +22,4 @@ jobs:
         uses: actions/setup-java@v4
         with: # 액션 또는 함수에 설정값을 전달할 때 사용된다.
           java-version: '21'
-          distribution: 'temurin'	
+          distribution: 'temurin'
