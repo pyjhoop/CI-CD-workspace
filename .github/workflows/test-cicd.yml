@@ -46,18 +46,10 @@ jobs:
           name: cicd-study-application
           path: build/libs/
 
-      - name: 다운로드된 파일 목록 확인
-        run: ls -l build/libs/
-
-      - name: EC2에 배포
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.AWS_HOST }}
-          username: ${{ secrets.AWS_USER_NAME }}
-          key: ${{ secrets.AWS_SECRET_KEY }}
-          port: 22
-          script: |
-            mkdir -p /home/${{ secrets.AWS_USER_NAME }}/
-            mv build/libs/cicd-study-1.0.0.jar /home/${{ secrets.AWS_USER_NAME }}/cicd-study-1.0.0.jar
-            pkill -f cicd-study || true
-            nohup java -jar /home/${{ secrets.AWS_USER_NAME }}/cicd-study-1.0.0.jar > app.log 2>&1 &
+      - name: Deploy to EC2
+        run: |
+          echo "${{ secrets.AWS_SECRET_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -o StrictHostKeyChecking=no build/libs/cicd-study-1.0.0.jar ${{ secrets.AWS_USER_NAME }}@${{ secrets.AWS_HOST }}:/home/${{ secrets.AWS_USER_NAME }}/cicd-study-1.0.0.jar
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ${{ secrets.AWS_USER_NAME }}@${{ secrets.AWS_HOST }} "pgrep java | xargs kill -9; nohup java -jar /home/${{ secrets.AWS_USER_NAME }}/cicd-study-1.0.0.jar > app.log 2>&1 &"
+          rm -f private_key.pem
