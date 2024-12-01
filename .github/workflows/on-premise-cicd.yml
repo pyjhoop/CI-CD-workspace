@@ -1,53 +1,68 @@
-name: on-premise-cicd
+name: Github-CI/CD
 
 on:
-  ## 수동으로 실행할 수 있도록 만들어줌.
-  workflow_dispatch:
-    inputs:
-      tags: # 어떤 버전에서 문제가 생겼는지 알기 위해서 태그를 사용함. 그래서 태그를 입력받도록 함.
-        description: 'Set Tags Name'
-        required: true
-        default: master
-
+  push:
+    branches:
+      - master
 
 jobs:
-  build: ## job의 id
-    runs-on: ubuntu-latest # 깃허브에서 호스팅하는 머신중에 우분투 최신 가상 머신이 실행되고 거기서 빌드 작업이 실핸된다.
-    outputs:
-      release: ${{ steps.set-version.outputs.VERSION_NAME }}
+  build:
+    runs-on: ubuntu-latest
+
     steps:
-      - id : set-version # v1.0.0 -> v1-0-0으로 변환
-        run: |
-          echo "VERSION_NAME=$(echo "${{ github.event.inputs.tags }}" | sed "s/\./\-/g")" >> $GITHUB_OUTPUT
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
 
-      - name: Check Version Name
-        run: |
-          echo "Check Version -> ${{ steps.set-version.outputs.VERSION_NAME }}"
+      - name: gradlew 권한 부여
+        run: chmod +x gradlew
 
-      - name: Checkout Source Code
-        uses: actions/checkout@v3 # GitHub Actions - Checkout Source Code
-        with:
-          ref: '${{ github.event.inputs.tags }}'
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew # 실행 권한
-
-      - name: Setup JDK 21
+      - name: JDK 21 설정
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Build with Gradelw
+      - name: gradlew로 빌드
         run: ./gradlew clean test bootJar
 
-      - name: Add version
+      - name: Jar 파일 이름 변경
         run: |
-          mv build/libs/cicd-0.0.1-SNAPSHOT.jar build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+          mv build/libs/cicd-0.0.1-SNAPSHOT.jar build/libs/cicd-study-1.0.0.jar
 
-      - name: Upload Artifact
+      - name: 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: cicd-study-application # 파일명으로 압축을 해줘 .zip ci runner 공간에 저장하게 된다.
-          path: build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+          name: cicd-study-application
+          path: build/libs/cicd-study-1.0.0.jar
 
+      - name: 빌드 성공 메시지 발송
+        uses: appleboy/telegram-action@master
+        if: success()
+        with:
+          to: ${{ secret.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            Author: ${{github.actor}}
+
+            Status: 😚 **Success**
+
+            Commit message: ${{ github.event.commits[0].message }}
+
+            [See changes](https://github.com/${{ github.repository }}/commit/${{github.sha}})
+
+      - name: Send Build Success Message
+        uses: appleboy/telegram-action@master
+        if: failure()
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            Author: ${{github.actor}}
+
+            Status: 😱 **Failure**
+
+            Commit message: ${{ github.event.commits[0].message }}
+
+            [link](https://github.com/${{ github.repository }}/actions)

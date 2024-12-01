@@ -1,0 +1,20 @@
+name: Master Branch Push CI/CD
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name : Check out source code
+        uses: actions/checkout@v4
+
+      - name : Set java Jdk 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
